@@ -1,0 +1,67 @@
+version: '3'
+
+services:
+
+  jupyterlab:
+    image: jupyter/scipy-notebook
+    container_name: jupyter
+    ports:
+      - 8889:8888
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - GRANT_SUDO=yes
+    volumes:
+      - vol-jupyter-data:/home/jovyan/work
+    networks:
+      - pyiotnet
+
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - 8888:3000
+    volumes:
+      - vol-grafana-data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=REPLACE_WITH_PASSWD_2
+      - GF_SERVER_ROOT_URL=http://grafana
+    networks:
+      - pyiotnet
+  
+ 
+  influxdb:
+    image: influxdb
+    container_name: influxdb
+    ports:
+      - "8086:8086"
+    volumes:
+      - vol-pyiotnet-data:/var/lib/influxdb
+    environment:
+      - INFLUXDB_DB=sensorhub 
+      - INFLUXDB_ADMIN_ENABLED=true
+      - INFLUXDB_ADMIN_USER=admin
+      - INFLUXDB_ADMIN_USER=sensorhub
+      - INFLUXDB_USER_PASSWORD=REPLACE_WITH_PASSWD_1
+      - INFLUXDB_ADMIN_PASSWORD=REPLACE_WITH_PASSWD_2
+    networks:
+      - pyiotnet
+
+
+  engine:
+    build: ./python_iot
+    container_name: 'engine'
+    depends_on: 
+      - influxdb
+    networks: 
+      - pyiotnet
+
+volumes:
+  vol-pyiotnet-data:
+  vol-grafana-data:
+  vol-jupyter-data:
+  
+
+
+networks: 
+  pyiotnet:
